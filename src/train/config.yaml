@@ -1,0 +1,24 @@
+horizon_days: 7
+holdout_days: 28
+min_history_days: 180
+
+xgb:
+  n_estimators: 600
+  max_depth: 8
+  learning_rate: 0.04
+  subsample: 0.8
+  colsample_bytree: 0.8
+  objective: reg:squarederror
+  tree_method: hist
+  random_state: 42
+  early_stopping_rounds: 40
+
+prophet:
+  weekly_seasonality: true
+  yearly_seasonality: true
+  daily_seasonality: false
+  country_holidays: US
+
+register:
+  vertex_display_name: demand_forecast_xgb
+  bump_version: true

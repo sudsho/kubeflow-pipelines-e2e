@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  serving:
+    build: .
+    image: demand-forecast:local
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_PATH=/models/xgb.json
+    volumes:
+      - ./local-models:/models:ro

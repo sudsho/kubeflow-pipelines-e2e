@@ -1,0 +1,9 @@
+# pipeline runner kubernetes service account, bound to the GSA via workload identity.
+# after terraform apply, replace PROJECT_ID with the actual project id.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kfp-runner
+  namespace: kubeflow
+  annotations:
+    iam.gke.io/gcp-service-account: kfp-runner@PROJECT_ID.iam.gserviceaccount.com

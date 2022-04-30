@@ -1,35 +1,22 @@
 """fastapi serving app.
 
-meant to run as a sidecar to a downloaded xgboost model.
-inline pydantic models for now, split into schemas.py once the surface grows.
+meant to run as a sidecar to a downloaded xgboost model (from vertex model registry
+or gcs). health endpoint + single + batch prediction.
 """
 import logging
 import os
-from typing import Dict, List
+from typing import List
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
 
 from src.serving.predictor import Predictor
+from src.serving.schemas import PredictRequest, PredictResponse, BatchRequest, BatchResponse
 
 log = logging.getLogger(__name__)
 
 MODEL_PATH = os.environ.get("MODEL_PATH", "/models/xgb.json")
 
-
-class PredictRequest(BaseModel):
-    store_id: str
-    sku_id: str
-    features: Dict[str, float] = Field(..., description="feature name -> value")
-
-
-class PredictResponse(BaseModel):
-    store_id: str
-    sku_id: str
-    yhat: float
-
-
-app = FastAPI(title="demand-forecast", version="0.1.0")
+app = FastAPI(title="demand-forecast", version="0.3.0")
 _predictor = Predictor(MODEL_PATH)
 
 
@@ -54,3 +41,11 @@ def predict(req: PredictRequest):
     except FileNotFoundError:
         raise HTTPException(status_code=503, detail="model not loaded")
     return PredictResponse(store_id=req.store_id, sku_id=req.sku_id, yhat=y)
+
+
+@app.post("/predict/batch", response_model=BatchResponse)
+def predict_batch(req: BatchRequest) -> BatchResponse:
+    if len(req.rows) == 0:
+        raise HTTPException(status_code=400, detail="empty batch")
+    ys: List[float] = _predictor.predict_batch([r.features for r in req.rows])
+    return BatchResponse(yhat=ys)

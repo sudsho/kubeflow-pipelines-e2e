@@ -1,6 +1,8 @@
 """feature schema + light validation.
 
-pipeline components import FEATURE_COLS and TARGET so the whole thing stays in one place.
+KFP v2 lightweight components cannot import local modules without a custom base
+image, so the feature-column list is retyped inside each component that needs
+it. This module is the reference definition and is exercised by the tests.
 """
 from typing import List
 

@@ -1,4 +1,3 @@
-# rename to .github/workflows/test.yml once the repo has the workflow scope enabled.
 name: tests
 
 on:

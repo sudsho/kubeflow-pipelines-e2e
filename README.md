@@ -1,27 +1,28 @@
 # kubeflow-pipelines-e2e
 
-End-to-end retail demand forecasting pipeline on Kubeflow Pipelines. Runs on GKE
-Autopilot, uses GCS as the artifact store, and registers the trained model in Vertex
-AI Model Registry. XGBoost is the production model; Prophet ships alongside as a
-per-SKU baseline so a bad week of features never silently hurts revenue.
+Scaffold for a retail demand forecasting pipeline on Kubeflow Pipelines v1
+(`kfp==1.8.13`). GCS as the artifact store, XGBoost as the primary model, Prophet
+included as a per-SKU baseline. This repo is a code layout and DAG sketch; it has
+not been run end to end against a live BigQuery source, and no benchmark numbers
+are reported.
 
-## the problem
+## problem sketch
 
-For a big-box retailer with a few thousand stores and tens of thousands of active SKUs,
-the weekly replenishment plan hinges on a horizon-7 forecast of unit demand per store
-per SKU. The forecast has to:
+Weekly replenishment for a store x SKU grid needs a short-horizon forecast of
+unit demand. The pipeline in this repo aims at:
 
-- retrain nightly from fresh POS data in BigQuery
-- respect seasonality (weekly + yearly + holidays) and promo lift
-- have a hard quality gate before it can affect ordering (WMAPE > 0.35 blocks release)
-- version cleanly in a model registry so we can roll back without a rebuild
+- reading POS features from BigQuery
+- fitting XGBoost with lag / rolling / calendar features
+- fitting a Prophet per (store, sku) group as a sanity baseline
+- gating registration on a WMAPE threshold before uploading to Vertex Model
+  Registry
 
 ## architecture
 
 ```
     BigQuery (retail_raw.pos_daily)
               |
-              | features.sql + label.sql
+              | features.sql
               v
     +---------------------+
     |  read_bq_features   |    (KFP component)
@@ -56,78 +57,46 @@ per SKU. The forecast has to:
     Serving container reads latest version by display_name
 ```
 
-Full architecture writeup and DAG rationale in [`docs/architecture.md`](docs/architecture.md).
+DAG rationale in [`docs/architecture.md`](docs/architecture.md).
 
 ## quick start
 
-Local sanity check (compiles the pipeline, runs unit tests, no cloud calls):
+Install and run the unit tests:
 
 ```bash
 make setup
 make test
-make compile
 ```
 
-Deploy the KFP standalone stack on a fresh GKE cluster and submit a run:
-
-```bash
-cd terraform && terraform init && terraform apply \
-  -var project=$GCP_PROJECT \
-  -var artifact_bucket=$GCS_BUCKET
-cd ..
-gcloud container clusters get-credentials $GKE_CLUSTER --region $GCP_REGION
-bash k8s/install_kfp.sh                            # see k8s/README.md
-python pipelines/compile.py --out dist/spec.json
-python pipelines/submit.py --project $GCP_PROJECT --package dist/spec.json
-```
-
-Serve the last-registered model locally:
-
-```bash
-gsutil cp gs://$GCS_BUCKET/models/demand_forecast_xgb/model.json local-models/xgb.json
-docker compose up serving
-curl -s localhost:8080/healthz | jq
-```
+Compiling and submitting to a live KFP standalone cluster requires additional
+setup that is not exercised here; see [`docs/kfp_v1_notes.md`](docs/kfp_v1_notes.md)
+for the pinning notes and gotchas.
 
 ## repo layout
 
 ```
 pipelines/
-  demand_forecast.py         KFP v1 pipeline definition
-  compile.py                 compile to IR JSON
-  submit.py                  submit to a KFP endpoint
+  demand_forecast.py         KFP pipeline definition
+  compile.py                 compile entrypoint
+  submit.py                  submit entrypoint
   components/                one @dsl.component per step
 sql/
   features.sql               daily feature build (BigQuery)
-  label.sql                  horizon-7 label
 src/
-  features/                  schema + local feature build helper
-  train/                     xgboost + prophet trainers (CLI-callable)
-  eval/                      metrics + report + holdout split
+  features/                  feature schema helpers
+  eval/                      metrics helpers
   serving/                   FastAPI serving app + predictor
 k8s/                         SA + RBAC + install notes
-terraform/                   GKE, GCS, IAM (workload identity)
+terraform/                   GKE, GCS, IAM sketches
 docs/                        architecture, gke setup, kfp notes, vertex registry
-notebooks/                   EDA + pipeline walkthrough
-tests/                       unit + compile smoke
+notebooks/                   EDA sketch
+tests/                       unit tests for feature schema and metrics helpers
 ```
 
-## results (dev cluster, 30 stores x 5000 SKUs, 90 days holdout window)
+## results
 
-| model               | WMAPE  | MAE   | RMSE  |
-|---------------------|--------|-------|-------|
-| Prophet per-SKU     | 0.412  | 8.6   | 17.4  |
-| XGBoost + lags      | 0.284  | 5.9   | 12.1  |
-
-The XGBoost head passes the 0.35 gate and is what gets registered.
-
-## era notes
-
-Written in April 2022 against `kfp==1.8.13`. KFP v2 was still in beta then; we compile
-with `kfp.v2.compiler.Compiler` (which produces the JSON PipelineSpec IR) and submit to
-the KFP standalone v1 API server. If you are picking this up later, see
-[`docs/kfp_v1_notes.md`](docs/kfp_v1_notes.md) for the client-server pinning that keeps
-this working.
+No benchmark numbers are reported in this repo. The pipeline has not been run
+end to end against a live source and no eval artifacts are committed.
 
 ## license
 

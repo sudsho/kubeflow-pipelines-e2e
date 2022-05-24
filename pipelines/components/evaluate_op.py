@@ -45,6 +45,9 @@ def evaluate(
 
     wmape_xgb = _wmape(ho[target], yhat_xgb)
 
+    # prophet_op currently emits forecasts on dates strictly after the last
+    # observed date, so this inner-join will typically be empty and the metric
+    # will be NaN. left as a placeholder rather than a validated comparison.
     merged = ho.merge(prox, on=["store_id", "sku_id", "ds"], how="inner")
     wmape_proph = _wmape(merged[target], merged["yhat"]) if len(merged) else float("nan")
 

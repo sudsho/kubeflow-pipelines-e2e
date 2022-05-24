@@ -19,6 +19,8 @@ def build_training_frame(
     df["ds"] = pd.to_datetime(df["ds"])
 
     df = df.sort_values(["store_id", "sku_id", "ds"])
+    # placeholder label. this is not a validated forward-looking horizon-h target;
+    # sql/label.sql shows the intended windowed-forward-sum shape.
     df["y_units_h7"] = (
         df.groupby(["store_id", "sku_id"])["units"]
         .transform(lambda s: s.shift(-1).rolling(horizon_days).sum())

@@ -8,7 +8,6 @@ from kfp.v2.dsl import component, Input, Output, Dataset, Model
         "pandas==1.4.2",
         "pyarrow==7.0.0",
         "xgboost==1.5.2",
-        "scikit-learn==1.0.2",
         "numpy==1.22.3",
     ],
 )

@@ -2,7 +2,7 @@
 import argparse
 import pathlib
 
-from kfp.v2 import compiler
+from kfp import compiler
 
 from pipelines.demand_forecast import demand_forecast_pipeline
 

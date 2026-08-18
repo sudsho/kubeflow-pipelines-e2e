@@ -33,10 +33,21 @@ def bias(y, yhat):
     return float(np.sum(yhat - y) / denom)
 
 
+def mape(y, yhat, eps=1.0):
+    """mean absolute percent error, per-row, with a small demand floor.
+
+    The ``eps`` floor keeps the metric finite when a holdout day has zero
+    demand (common in retail SKU-day grids).
+    """
+    y, yhat = np.asarray(y, dtype=float), np.asarray(yhat, dtype=float)
+    return float(np.mean(np.abs(y - yhat) / np.maximum(np.abs(y), eps)))
+
+
 def report(y, yhat) -> Dict[str, float]:
     return {
         "mae": mae(y, yhat),
         "rmse": rmse(y, yhat),
         "wmape": wmape(y, yhat),
+        "mape": mape(y, yhat),
         "bias": bias(y, yhat),
     }

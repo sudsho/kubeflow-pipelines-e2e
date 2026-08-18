@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.eval.metrics import mae, rmse, wmape, bias, report
+from src.eval.metrics import mae, rmse, wmape, bias, mape, report
 
 
 def test_perfect_prediction():
@@ -32,3 +32,16 @@ def test_mae_rmse():
     yhat = np.array([3.0, 4.0])
     assert mae(y, yhat) == 3.5
     assert abs(rmse(y, yhat) - (25.0 / 2) ** 0.5) < 1e-9
+
+
+def test_mape_perfect_and_shape():
+    y = np.array([100.0, 200.0])
+    assert mape(y, y) == 0.0
+    yhat = np.array([110.0, 180.0])
+    # (10/100 + 20/200) / 2 = 0.1
+    assert abs(mape(y, yhat) - 0.1) < 1e-9
+
+
+def test_mape_in_report():
+    y = np.array([10.0, 20.0, 30.0])
+    assert "mape" in report(y, y)

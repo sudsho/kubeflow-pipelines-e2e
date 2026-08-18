@@ -1,5 +1,11 @@
-"""kfp v1 component: run features.sql in bigquery and emit a parquet dataset on gcs."""
-from kfp.v2.dsl import component, Output, Dataset
+"""kfp component: run features.sql in bigquery and emit a parquet dataset on gcs.
+
+Set ``DEMAND_FORECAST_SYNTHETIC=1`` to skip BigQuery/GCS entirely and emit a
+synthetic demand dataset instead, so this component runs offline on CPU with no
+credentials. The live BigQuery path is the default and is selected whenever that
+env var is unset.
+"""
+from kfp.dsl import component, Output, Dataset
 
 
 @component(
@@ -26,6 +32,15 @@ def read_bq_features(
         dest_table: fully qualified `proj.dataset.table` for the query result.
         features: output kfp dataset (parquet on the pipeline artifact store).
     """
+    import os
+
+    if os.environ.get("DEMAND_FORECAST_SYNTHETIC") == "1":
+        # offline path: no BigQuery, no GCS, no credentials.
+        from src.features.synthetic import generate_raw_features
+
+        generate_raw_features().to_parquet(features.path, index=False)
+        return
+
     from google.cloud import bigquery, storage  # noqa: WPS433
 
     def _read_sql(uri: str) -> str:

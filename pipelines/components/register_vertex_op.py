@@ -1,5 +1,5 @@
 """kfp component: upload the xgb model to gcs and register a new version in vertex model registry."""
-from kfp.v2.dsl import component, Input, Model
+from kfp.dsl import component, Input, Model
 
 
 @component(
@@ -25,11 +25,19 @@ def register_in_vertex(
         display_name: model display name (versions share a display name).
         xgb_model: input model artifact from the training step.
     """
+    import os
     import pathlib
-    from google.cloud import aiplatform, storage
 
     local = xgb_model.path + ".json"
     assert pathlib.Path(local).exists(), local
+
+    if os.environ.get("DEMAND_FORECAST_SYNTHETIC") == "1":
+        # offline path: skip the GCS upload + Vertex Model Registry call so the
+        # gated register step can be exercised on CPU with no credentials.
+        print(f"[offline] skipping vertex register; model staged at {local}")
+        return
+
+    from google.cloud import aiplatform, storage
 
     assert gcs_staging.startswith("gs://"), gcs_staging
     without = gcs_staging[len("gs://"):]

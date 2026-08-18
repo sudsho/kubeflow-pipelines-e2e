@@ -1,5 +1,5 @@
 """kfp component: read raw features parquet, add label column, split into train/holdout."""
-from kfp.v2.dsl import component, Input, Output, Dataset
+from kfp.dsl import component, Input, Output, Dataset
 
 
 @component(

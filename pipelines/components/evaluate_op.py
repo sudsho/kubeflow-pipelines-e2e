@@ -1,7 +1,7 @@
 """kfp component: evaluate xgb and prophet on the holdout, emit metrics json + gating decision."""
 from typing import NamedTuple
 
-from kfp.v2.dsl import component, Input, Output, Dataset, Model, Metrics
+from kfp.dsl import component, Input, Output, Dataset, Model, Metrics
 
 
 @component(

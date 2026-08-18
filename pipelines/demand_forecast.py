@@ -1,5 +1,5 @@
 """kubeflow v1 pipeline: read_bq -> features -> train xgb + prophet -> evaluate -> register."""
-from kfp.v2 import dsl
+from kfp import dsl
 
 from pipelines.components.read_bq import read_bq_features
 from pipelines.components.features_op import build_training_frame

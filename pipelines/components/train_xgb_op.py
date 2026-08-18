@@ -1,5 +1,5 @@
 """kfp component: train xgboost on the training frame, emit a Model artifact."""
-from kfp.v2.dsl import component, Input, Output, Dataset, Model
+from kfp.dsl import component, Input, Output, Dataset, Model
 
 
 @component(

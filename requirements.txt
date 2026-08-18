@@ -1,17 +1,29 @@
-kfp==1.8.13
-kfp-server-api==1.8.5
-google-cloud-aiplatform==1.11.0
-google-cloud-storage==2.3.0
-google-cloud-bigquery==3.0.1
-google-auth==2.6.6
-pandas==1.4.2
-numpy==1.22.3
-xgboost==1.5.2
-prophet==1.0
-pyarrow==7.0.0
-matplotlib==3.5.1
-fastapi==0.75.2
-uvicorn==0.17.6
-pydantic==1.9.0
-pytest==7.1.1
-db-dtypes==1.0.0
+# Ported from kfp 1.8.13 (kfp.v2 SDK) to kfp 2.x. kfp 1.8.x does not install on
+# modern Python (3.11+); the pipeline now uses the native `kfp` namespace and
+# compiles to an IR PipelineSpec. See docs/kfp_v1_notes.md.
+kfp>=2.7,<3
+
+# core: needed for the offline CPU smoke (pipelines/run_local.py) and tests.
+pandas>=2.0
+numpy>=1.24
+xgboost>=1.7
+pyarrow>=12.0
+scikit-learn>=1.2
+
+# serving
+fastapi>=0.100
+uvicorn>=0.22
+pydantic>=2.0
+
+# test
+pytest>=7.1
+
+# cloud (live BigQuery / GCS / Vertex path only; not needed for the offline smoke)
+google-cloud-aiplatform>=1.30
+google-cloud-storage>=2.10
+google-cloud-bigquery>=3.10
+google-auth>=2.20
+db-dtypes>=1.0
+
+# prophet baseline is optional and heavy (pulls cmdstanpy); install on demand:
+#   pip install prophet

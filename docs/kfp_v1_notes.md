@@ -1,5 +1,22 @@
 # kfp v1 notes
 
+## update: ported to kfp 2.x
+
+`kfp==1.8.13` does not install on modern Python (3.11+), so the pipeline was
+ported to `kfp>=2.7`. The change was small because the code already targeted the
+v2 SDK (`kfp.v2`): the imports moved from `kfp.v2.dsl` / `kfp.v2.compiler` to the
+native `kfp.dsl` / `kfp.compiler` namespace (the `kfp.v2` shim in 2.x is
+deprecated and slated for removal). The `dsl.Condition(step.outputs["passed"] ==
+True, ...)` gate and typed `Input[...]` / `Output[...]` artifacts carry over
+unchanged. `kfp.compiler.Compiler` emits an IR `PipelineSpec` (JSON) that
+`dist/demand_forecast.json` holds after `make compile`.
+
+The v1-era notes below are kept for historical context. The
+`kfp.Client.run_pipeline` package-extension limitation is a v1 client concern and
+does not apply to the 2.x path.
+
+---
+
 Notes accumulated while sketching this pipeline against `kfp==1.8.13`. Written
 down so the next attempt does not repeat the same footguns.
 

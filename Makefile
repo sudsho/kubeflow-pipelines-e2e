@@ -2,7 +2,9 @@ PY := python
 PIP := pip
 IMG := demand-forecast:local
 
-.PHONY: setup lint test compile submit docker docker-run clean
+export PYTHONPATH := $(CURDIR)
+
+.PHONY: setup lint test smoke compile submit docker docker-run clean
 
 setup:
 	$(PIP) install -r requirements.txt
@@ -12,6 +14,10 @@ lint:
 
 test:
 	pytest -q
+
+# offline: compile the pipeline + run the components on CPU with synthetic data.
+smoke:
+	$(PY) pipelines/run_local.py
 
 compile:
 	mkdir -p dist
